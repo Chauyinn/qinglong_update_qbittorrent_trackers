@@ -1,21 +1,22 @@
 #!/bin/bash
 
 # --- 配置 ---
-QB_URL=$QBITTORRENT_URL           # qBittorrent Web UI 地址
-QB_USERNAME=$$QBITTORRENT_USER    # 替换为你的用户名
-QB_PASSWORD=$QBITTORRENT_PASSWORD # 替换为你的密码
+QB_URL=$QBITTORRENT_URL                                  # qBittorrent Web UI 地址
+QB_USERNAME=$QBITTORRENT_USER                            # qBittorrent 用户名
+QB_PASSWORD=$QBITTORRENT_PASSWORD                        # qBittorrent 密码
+QBITTORRENT_TRACKER_URLS=$QBITTORRENT_TRACKER_URLS       # qBittorrent Tracker URL 列表
+QBITTORRENT_CUSTOM_TRACKERS=$QBITTORRENT_CUSTOM_TRACKERS # 自定义 Tracker 列表
 
-# 多个Tracker列表URL (数组)
-TRACKERS_LIST_URLS=(
-  "https://cf.trackerslist.com/all.txt"
-  # 可以添加更多URL
-)
+# 多个Tracker列表URL (从环境变量获取)
+# 可以用分号(;)分隔多个URL，例如 "https://url1.com;https://url2.com"
+DEFAULT_TRACKER_URL="https://cf.trackerslist.com/all.txt"
+TRACKER_URLS=${QBITTORRENT_TRACKER_URLS:-$DEFAULT_TRACKER_URL}
 
-# 这里添加自定义tracker，每行一个
-CUSTOM_TRACKERS=$(
-  cat <<EOF
-EOF
-)
+# 将分隔的URL字符串转换为数组
+IFS=';' read -ra TRACKERS_LIST_URLS <<<"$TRACKER_URLS"
+
+# 自定义tracker (从环境变量获取)
+CUSTOM_TRACKERS=${QBITTORRENT_CUSTOM_TRACKERS:-""}
 
 # --- 获取 tracker 列表 ---
 echo "正在获取 tracker 列表..."
@@ -52,7 +53,9 @@ fi
 
 # 处理自定义trackers
 if [ -n "$CUSTOM_TRACKERS" ]; then
-  ALL_TRACKERS="$ALL_TRACKERS"$'\n'"$CUSTOM_TRACKERS"
+  # 将分号分隔的字符串转换为换行符分隔的字符串
+  CUSTOM_TRACKERS_CONVERTED=$(echo "$CUSTOM_TRACKERS" | tr ';' '\n')
+  ALL_TRACKERS="$ALL_TRACKERS"$'\n'"$CUSTOM_TRACKERS_CONVERTED"
   echo "已添加自定义trackers"
 fi
 
